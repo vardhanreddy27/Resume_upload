@@ -1,34 +1,40 @@
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'); // Ensure Playwright is installed
 
 (async () => {
-  const browser = await chromium.launch({
-    headless: false,  // For testing
-    args: ['--start-maximized']
-  });
-  const context = await browser.newContext({
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113 Safari/537.36',
-    viewport: null
-  });
+  // Launch browser in headless mode to avoid XServer issues
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext();
   const page = await context.newPage();
 
-  await page.goto('https://www.naukri.com/nlogin/login', { waitUntil: 'domcontentloaded' });
+  // Navigate to Naukri login page
+  await page.goto('https://www.naukri.com/nlogin/login');
 
-  // Wait for React login to render (increase timeout)
-  await page.waitForSelector('#usernameField', { timeout: 30000 });
+  // Wait and fill in login details
+  await page.waitForSelector('#usernameField', { timeout: 15000 });
+  await page.fill('#usernameField', 'your-email@example.com');
 
-  // Slow typing mimics human
-  await page.type('#usernameField', process.env.NAUKRI_EMAIL, { delay: 100 });
-  await page.type('#passwordField', process.env.NAUKRI_PASSWORD, { delay: 100 });
+  await page.waitForSelector('#passwordField', { timeout: 15000 });
+  await page.fill('#passwordField', 'your-password');
 
+  // Click login button
   await page.click('button[type="submit"]');
 
-  await page.waitForNavigation({ waitUntil: 'networkidle' });
+  // Wait for login to complete
+  await page.waitForLoadState('networkidle');
 
-  await page.goto('https://www.naukri.com/mnjuser/profile/edit', { waitUntil: 'networkidle' });
+  // Navigate to resume upload page (update this URL if needed)
+  await page.goto('https://www.naukri.com/mnjuser/profile');
 
-  const fileInput = await page.waitForSelector('input[type="file"]', { timeout: 10000 });
-  await fileInput.setInputFiles('vishnu_pega_developer.pdf');
+  // Wait for resume upload input
+  const fileInput = await page.waitForSelector('input[type="file"]', { timeout: 15000 });
 
-  console.log('✅ Resume uploaded successfully!');
+  // Upload resume (path must be accessible)
+  await fileInput.setInputFiles('/path/to/your_resume.pdf');
+
+  console.log('✅ Resume uploaded successfully');
+
+  // Optional: wait to ensure upload completes
+  await page.waitForTimeout(5000);
+
   await browser.close();
 })();
