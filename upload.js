@@ -1,27 +1,31 @@
 const { chromium } = require('playwright');
 
 (async () => {
-  const browser = await chromium.launch({ headless: false }); // set to true on server
-  const page = await browser.newPage();
+  const browser = await chromium.launch({
+    headless: false,  // For testing
+    args: ['--start-maximized']
+  });
+  const context = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113 Safari/537.36',
+    viewport: null
+  });
+  const page = await context.newPage();
 
-  // Go to login page
-  await page.goto('https://www.naukri.com/nlogin/login', { waitUntil: 'networkidle' });
+  await page.goto('https://www.naukri.com/nlogin/login', { waitUntil: 'domcontentloaded' });
 
-  // Wait for React app inside #root to render login input
-  await page.waitForSelector('#usernameField', { timeout: 15000 });
-  await page.fill('#usernameField', process.env.NAUKRI_EMAIL);
-  await page.fill('#passwordField', process.env.NAUKRI_PASSWORD);
+  // Wait for React login to render (increase timeout)
+  await page.waitForSelector('#usernameField', { timeout: 30000 });
 
-  // Click login button
+  // Slow typing mimics human
+  await page.type('#usernameField', process.env.NAUKRI_EMAIL, { delay: 100 });
+  await page.type('#passwordField', process.env.NAUKRI_PASSWORD, { delay: 100 });
+
   await page.click('button[type="submit"]');
 
-  // Wait for successful login
   await page.waitForNavigation({ waitUntil: 'networkidle' });
 
-  // Go to resume upload page
   await page.goto('https://www.naukri.com/mnjuser/profile/edit', { waitUntil: 'networkidle' });
 
-  // Upload resume
   const fileInput = await page.waitForSelector('input[type="file"]', { timeout: 10000 });
   await fileInput.setInputFiles('vishnu_pega_developer.pdf');
 
