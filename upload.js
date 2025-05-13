@@ -22,7 +22,7 @@ const { chromium } = require('playwright');
   await page.goto('https://www.naukri.com/mnjuser/profile');
 
   const fileInput = await page.waitForSelector('input[type="file"]', { timeout: 15000 });
-  await fileInput.setInputFiles('your_resume.pdf');
+  await fileInput.setInputFiles('vishnu_pega_developer.pdf');
 
   console.log('✅ Resume uploaded successfully');
   await page.waitForTimeout(5000);
