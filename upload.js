@@ -1,30 +1,35 @@
 const { chromium } = require('playwright');
 
 (async () => {
-  const browser = await chromium.launch({
-    headless: true, // <== Critical for headless environments!
-  });
+  try {
+    const browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext();
+    const page = await context.newPage();
 
-  const context = await browser.newContext();
-  const page = await context.newPage();
+    await page.goto('https://www.naukri.com/nlogin/login', { waitUntil: 'domcontentloaded' });
 
-  await page.goto('https://www.naukri.com/nlogin/login');
+    // Email
+    await page.fill('input[placeholder="Email ID / Username"]', process.env.NAUKRI_EMAIL);
 
-  await page.waitForSelector('#usernameField', { timeout: 15000 });
-  await page.fill('#usernameField', process.env.NAUKRI_EMAIL);
+    // Password
+    await page.fill('input[placeholder="Password"]', process.env.NAUKRI_PASSWORD);
 
-  await page.waitForSelector('#passwordField', { timeout: 15000 });
-  await page.fill('#passwordField', process.env.NAUKRI_PASSWORD);
+    // Click login
+    await page.click('button[type="submit"]');
+    await page.waitForLoadState('networkidle');
 
-  await page.click('button[type="submit"]');
-  await page.waitForLoadState('networkidle');
+    // Navigate to profile
+    await page.goto('https://www.naukri.com/mnjuser/profile', { waitUntil: 'domcontentloaded' });
 
-  await page.goto('https://www.naukri.com/mnjuser/profile');
+    // Upload resume
+    const fileInput = await page.waitForSelector('input[type="file"]', { timeout: 10000 });
+    await fileInput.setInputFiles('vishnu_pega_developer.pdf');
 
-  const fileInput = await page.waitForSelector('input[type="file"]', { timeout: 15000 });
-  await fileInput.setInputFiles('vishnu_pega_developer.pdf');
-
-  console.log('✅ Resume uploaded successfully');
-  await page.waitForTimeout(5000);
-  await browser.close();
+    console.log('✅ Resume uploaded successfully');
+    await page.waitForTimeout(3000);
+    await browser.close();
+  } catch (error) {
+    console.error('❌ Upload failed:', error);
+    process.exit(1);
+  }
 })();
