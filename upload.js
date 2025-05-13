@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 const path = require('path');
 
 (async () => {
-  const browser = await chromium.launch({ headless: false }); // Set to false for debugging
+  const browser = await chromium.launch({ headless: true }); // 👈 must be true in CI/servers
   const context = await browser.newContext();
   const page = await context.newPage();
 
@@ -15,8 +15,8 @@ const path = require('path');
     await page.waitForSelector('#passwordField', { timeout: 60000 });
 
     console.log("Filling login form...");
-    await page.fill('#usernameField', process.env.NAUKRI_EMAIL || 'your-email@example.com');
-    await page.fill('#passwordField', process.env.NAUKRI_PASSWORD || 'your-password');
+    await page.fill('#usernameField', process.env.NAUKRI_EMAIL);
+    await page.fill('#passwordField', process.env.NAUKRI_PASSWORD);
 
     console.log("Clicking login...");
     await Promise.all([
