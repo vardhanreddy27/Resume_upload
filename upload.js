@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 const path = require('path');
 
 (async () => {
-  const browser = await chromium.launch({ headless: true }); // Set false to debug
+  const browser = await chromium.launch({ headless: false }); // Set to false for debugging
   const context = await browser.newContext();
   const page = await context.newPage();
 
@@ -10,13 +10,13 @@ const path = require('path');
     console.log("Navigating to login page...");
     await page.goto('https://www.naukri.com/nlogin/login', { waitUntil: 'domcontentloaded' });
 
-    console.log("Waiting for email input...");
-    await page.waitForSelector('input[name="username"]', { timeout: 60000 });
-    await page.waitForSelector('input[name="password"]', { timeout: 60000 });
+    console.log("Waiting for login form...");
+    await page.waitForSelector('#usernameField', { timeout: 60000 });
+    await page.waitForSelector('#passwordField', { timeout: 60000 });
 
     console.log("Filling login form...");
-    await page.fill('input[name="username"]', process.env.NAUKRI_EMAIL || 'your-email@example.com');
-    await page.fill('input[name="password"]', process.env.NAUKRI_PASSWORD || 'your-password');
+    await page.fill('#usernameField', process.env.NAUKRI_EMAIL || 'your-email@example.com');
+    await page.fill('#passwordField', process.env.NAUKRI_PASSWORD || 'your-password');
 
     console.log("Clicking login...");
     await Promise.all([
@@ -24,9 +24,8 @@ const path = require('path');
       page.click('button[type="submit"]')
     ]);
 
-    // Optional: Verify login success
-    if (await page.url().includes('nlogin')) {
-      throw new Error('Login appears to have failed. Check credentials.');
+    if (page.url().includes('nlogin')) {
+      throw new Error('Login may have failed. Double-check credentials or CAPTCHA.');
     }
 
     console.log("Navigating to resume upload page...");
