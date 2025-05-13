@@ -1,35 +1,37 @@
 const { chromium } = require('playwright');
 
 (async () => {
-  try {
-    const browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext();
-    const page = await context.newPage();
+  const browser = await chromium.launch({ headless: true }); // set false to debug locally
+  const context = await browser.newContext();
+  const page = await context.newPage();
 
-    await page.goto('https://www.naukri.com/nlogin/login', { waitUntil: 'domcontentloaded' });
+  console.log("Navigating to login page...");
+  await page.goto('https://www.naukri.com/nlogin/login', { waitUntil: 'networkidle' });
 
-    // Email
-    await page.fill('input[placeholder="Email ID / Username"]', process.env.NAUKRI_EMAIL);
+  console.log("Waiting for email input...");
+  await page.waitForSelector('input[placeholder="Email ID / Username"]', { timeout: 60000 }); // wait up to 60s
 
-    // Password
-    await page.fill('input[placeholder="Password"]', process.env.NAUKRI_PASSWORD);
+  await page.fill('input[placeholder="Email ID / Username"]', process.env.NAUKRI_EMAIL);
+  await page.fill('input[placeholder="Password"]', process.env.NAUKRI_PASSWORD);
 
-    // Click login
-    await page.click('button[type="submit"]');
-    await page.waitForLoadState('networkidle');
+  console.log("Clicking login...");
+  await page.click('button[type="submit"]');
 
-    // Navigate to profile
-    await page.goto('https://www.naukri.com/mnjuser/profile', { waitUntil: 'domcontentloaded' });
+  // Wait for navigation to complete after login
+  await page.waitForNavigation({ waitUntil: 'networkidle' });
 
-    // Upload resume
-    const fileInput = await page.waitForSelector('input[type="file"]', { timeout: 10000 });
-    await fileInput.setInputFiles('vishnu_pega_developer.pdf');
+  // Navigate to the resume upload page
+  console.log("Navigating to resume upload page...");
+  await page.goto('https://www.naukri.com/mnjuser/profile', { waitUntil: 'networkidle' });
 
-    console.log('✅ Resume uploaded successfully');
-    await page.waitForTimeout(3000);
-    await browser.close();
-  } catch (error) {
-    console.error('❌ Upload failed:', error);
-    process.exit(1);
-  }
+  // Wait for the upload button
+  console.log("Waiting for upload input...");
+  const fileInput = await page.waitForSelector('input[type="file"]', { timeout: 60000 });
+
+  // Upload your resume
+  await fileInput.setInputFiles('vishnu_pega_developer.pdf');
+
+  console.log('✅ Resume uploaded successfully.');
+
+  await browser.close();
 })();
